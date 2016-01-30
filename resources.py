@@ -4,13 +4,14 @@ import time
 
 #tracks a position in a specific stock
 class position:
-    def addOrder(res):
+    def addOrder(self,res):
         r_json = res.json()
         if(res.status_code and r_json['ok']):
             pos += r_json['totalFilled']
             if r_json['type'] in ('limit','market') and r_json['open']:
-                order = {'id':r_json['id'],'qty':r_json['qty'],'direction':r_json['direction'],'price':r_json['price']}
-                orders[str(id)] = order
+                order = {'id':r_json['id'],'qty':r_json['qty'],'filled':r_json['totalFilled'],'direction':r_json['direction'],'price':r_json['price']}
+                self.orders[str(r_json['id'])] = order
+                self.pos += order['filled']
 
     def __init__(self,symbol,position = 0):
         self.sym = symbol
@@ -41,12 +42,21 @@ class account:
     
     #takes position and updates orders therein
     def poll(self,pos):
+        to_remove = []
         for (id,order) in pos.orders.iteritems():
             params = {'id':order['id'],'venue':self.ven,'stock':order.sym}
             r = requests.get(base_url+'/orders/'+str(order['id'],data=json.dumps(params),headers=headers)
             r_json = r.json()
             if r.status_code and r_json['ok']:
-                                 if r_json['qty'] != order['qty']:
+                dif = r_json['totalFilled'] - order['filled']
+                if dif != 0:
+                    pos.pos += dif
+                    order['filled'] += dif
+            if order['filled'] = order['qty']:
+                 to_remove += [id]
+        for id in to_remove:
+            del pos.orders[id]
+                        
                                  
 
     def __init__(self,v,a):
